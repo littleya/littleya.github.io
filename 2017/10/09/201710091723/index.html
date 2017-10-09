@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="Ya&#39;s blog">
 <meta property="og:description" content="由于leanote客户端的一些故障, 所以现在迁移至github pages, 使用hexo生成静态页面, 这里写下如何在arch linux上搭建hexo环境">
 <meta property="og:locale" content="en">
-<meta property="og:updated_time" content="2017-10-09T10:20:50.097Z">
+<meta property="og:updated_time" content="2017-10-09T10:54:49.360Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="arch linux安装使用hexo">
 <meta name="twitter:description" content="由于leanote客户端的一些故障, 所以现在迁移至github pages, 使用hexo生成静态页面, 这里写下如何在arch linux上搭建hexo环境">
@@ -188,7 +188,38 @@
 <li><p>部署到github<br><code>hexo deploy</code></p>
 </li>
 </ul>
-<h2 id="3-通过分支保存原始文件"><a href="#3-通过分支保存原始文件" class="headerlink" title="3. 通过分支保存原始文件"></a>3. 通过分支保存原始文件</h2>
+<h2 id="3-通过分支保存原始文件"><a href="#3-通过分支保存原始文件" class="headerlink" title="3. 通过分支保存原始文件"></a>3. 通过分支保存原始文件</h2><h3 id="3-1-部署"><a href="#3-1-部署" class="headerlink" title="3.1 部署"></a>3.1 部署</h3><ul>
+<li><p>github创建仓库littleya.github.io</p>
+</li>
+<li><p>创建两个分支: master, hexo; 设置hexo为默认分支</p>
+</li>
+<li><p>git clone git@github.com:littleya/littleya.github.io.git 将仓库拉下来</p>
+</li>
+<li><p>参考2.1 初始化</p>
+</li>
+<li><p>修改_config.yml中的deploy参数, 分支为master, 具体参考2.2 配置</p>
+</li>
+<li><p>新建文件.gitignore, 忽略public/和.deploy*/两个文件夹</p>
+</li>
+<li><p>git add .; git commit -m “…”; git push origin hexo (上传hexo源文件到hexo分支)</p>
+</li>
+<li><p>hexo g -d (上传静态网页到master分支)</p>
+</li>
+</ul>
+<h3 id="3-2-日常使用"><a href="#3-2-日常使用" class="headerlink" title="3.2 日常使用"></a>3.2 日常使用</h3><p>添加修改后:</p>
+<ul>
+<li><p>git add .; git commit -m “…”; git push origin hexo (上传hexo源文件到hexo分支)</p>
+</li>
+<li><p>hexo g -d (上传静态网页到master分支)</p>
+</li>
+</ul>
+<h3 id="3-3-切换设备"><a href="#3-3-切换设备" class="headerlink" title="3.3 切换设备"></a>3.3 切换设备</h3><ul>
+<li><p>git clone git@github.com:littleya/littleya.github.io.git 将仓库拉下来</p>
+</li>
+<li><p>参考 1, 2.1, 2.2进行初始化(不需要hexo init 指令)</p>
+</li>
+</ul>
+
       
 
       
