@@ -6,15 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://littleya.github.io">
-  <title>Archives | Ya&#39;s blog</title>
+  <title>deluge RPC API | Ya&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Ya&#39;s blog">
-<meta property="og:url" content="https://littleya.github.io/archives/page/2/index.html">
+  <meta name="description" content="翻译自: readthedocs">
+<meta name="keywords" content="linux,deluge">
+<meta property="og:type" content="article">
+<meta property="og:title" content="deluge RPC API">
+<meta property="og:url" content="https://littleya.github.io/2017/10/09/201710092005/index.html">
 <meta property="og:site_name" content="Ya&#39;s blog">
+<meta property="og:description" content="翻译自: readthedocs">
 <meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2017-11-15T11:15:30.842Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Ya&#39;s blog">
+<meta name="twitter:title" content="deluge RPC API">
+<meta name="twitter:description" content="翻译自: readthedocs">
   
     <link rel="alternative" href="/atom.xml" title="Ya&#39;s blog" type="application/atom+xml">
   
@@ -140,36 +145,623 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-201710092005" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      deluge RPC API
+    </h1>
+  
+
+        
+        <a href="/2017/10/09/201710092005/" class="archive-article-date">
+  	<time datetime="2017-10-09T12:05:04.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>翻译自: <a href="https://deluge.readthedocs.io/en/develop/core/rpc.html" target="_blank" rel="external">readthedocs</a></p>
+<a id="more"></a>
+<h1 id="Deluge-PRC"><a href="#Deluge-PRC" class="headerlink" title="Deluge PRC"></a>Deluge PRC</h1><h2 id="Message-Formats"><a href="#Message-Formats" class="headerlink" title="Message Formats"></a>Message Formats</h2><p>DelugeRPC是和守护进程/客户端通信的协议.有四种类型:RPC Request, RPC Response, RPC Error 和 Event.所有的消息通过zlib压缩重编码.</p>
+<h3 id="RPC-Request"><a href="#RPC-Request" class="headerlink" title="RPC Request"></a>RPC Request</h3><p>此类消息由客户端创建并发送至服务端, 多个请求可以打包在一个list中.</p>
+<p>[[request_id, method, [args], {kwargs}], …]</p>
+<p><strong> request_id (int) </strong><br>int类型, 由客户端确定的一个整数, 用于服务器回复. 这用于确保客户端知道数据响应的是哪个请求. 另一种选择是按请求进来的顺序进行响应, 但如果先前的请求需要更长时间处理可能会导致滞后.</p>
+<p><strong> method (str) </strong><br>string类型, 需要远程调用的方法, </p>
+<p><strong> args (list) </strong><br>list类型, 远程方法的参数, </p>
+<p><strong> kwargs (dict) </strong><br>dict类型, 远程方法的参数</p>
+<h3 id="RPC-Response"><a href="#RPC-Response" class="headerlink" title="RPC Response"></a>RPC Response</h3><p>此类消息用于回复客户端的RPC Request, 它会返回调用的方法的返回值. 在发生错误的情况下, 它会返回一个PRC Error.</p>
+<p>[message_type, request_id, [return_value]]</p>
+<p><strong> message_type (int) </strong><br>int类型, 这是一个RPC_RESPONSE类型id, 客户端用它判断服务端返回的消息类型.</p>
+<p><strong> request_id (int) </strong><br>int类型, 和客户端发来的request_id相同, 客户端用它判断响应对应的请求</p>
+<p><strong> return_value (list) </strong><br>list类型, 调用的方法的返回值</p>
+<h3 id="PRC-Error"><a href="#PRC-Error" class="headerlink" title="PRC Error"></a>PRC Error</h3><p>此类消息是当处理RPC Request出错时, 用于替代PRC Response而创建的.</p>
+<p>[message_type, request_id, exception_type, exception_msg, traceback]</p>
+<p><strong> message_type (int) </strong><br>int类型, RPC_ERROR类型id</p>
+<p><strong> request_id (int) </strong><br>int类型, 和客户端发来的request_id相同, 客户端用它判断响应对应的请求</p>
+<p><strong> exception_type (str) </strong><br>string类型, 引发异常的类型</p>
+<p><strong> exception_msg (str) </strong><br>string类型, 异常引发的原因</p>
+<p><strong> traceback (str) </strong><br>string类型, 对生成的异常的追溯</p>
+<h3 id="Event"><a href="#Event" class="headerlink" title="Event"></a>Event</h3><p>此类消息由服务端创建并且发送给客户端而不需响应RPC请求. 当服务端状态更改时, 通常会发送Event以便于客户端了解.</p>
+<p>[message_type, event_name, data]</p>
+<p><strong> message_type (int) </strong><br>int类型, PRC_EVENT类型id</p>
+<p><strong> event_name (str) </strong><br>string类型, 服务端发出的事件名称</p>
+<p><strong> data (list) </strong><br>list类型, 事件的附加信息</p>
+<h2 id="Remote-API"><a href="#Remote-API" class="headerlink" title="Remote API"></a>Remote API</h2><blockquote>
+<p>class deluge.__rpcapi.RpcApi</p>
+</blockquote>
+<h3 id="core类中可用的方法"><a href="#core类中可用的方法" class="headerlink" title="core类中可用的方法"></a>core类中可用的方法</h3><blockquote>
+<p>class core #deluge.core.core.Core</p>
+</blockquote>
+<p>1.添加一个种子</p>
+<blockquote>
+<p>add_torrent_file(<em>filename, filedump, options</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args: </p>
+<ul>
+<li>filename(str): string类型, 种子文件名</li>
+<li>filedump(str): string类型, 种子文件的base64编码</li>
+<li>options(dict): dict类型, 种子文件添加后的附加选项</li>
+</ul>
+<p>Returns: </p>
+<ul>
+<li>torrent_id(str): string类型, 种子id或者None</li>
+</ul>
+<p>2.添加多个种子</p>
+<blockquote>
+<p>add_torrent_files(<em>torrent_files</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_files (list of tuples): list或者tuples类型, [[<em>filename, filedump, options</em>], …]</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>Deferred</li>
+</ul>
+<p>3.通过磁力链接中添加种子</p>
+<blockquote>
+<p>add_torrent_magnet(<em>uri, options</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>uri(str): string类型, 磁力链接</li>
+<li>options(dict): dict类型, 种子文件添加后的附加选项</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+</ul>
+<p>4.通过超链接添加种子(deluge会自动下载种子文件)</p>
+<blockquote>
+<p>add_torrent_url(<em>url, options, headers=None</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>url(str): string类型, 链接地址</li>
+<li>options(dict): dict类型, 种子文件上传后的附加选项</li>
+<li>headers(dict): dict类型, 下载种子文件时发送的http headers</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id或者None</li>
+</ul>
+<p>5.为种子手动添加peer</p>
+<blockquote>
+<p>connect_peer(<em>torrent_id, ip, port</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+<li>ip(str): string类型, peer的ip</li>
+<li>port(int): int类型, peer的端口</li>
+</ul>
+<p>6.创建账户</p>
+<blockquote>
+<p>　create_account(<em>username, password, authlevel</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 10)</p>
+<p>Args:</p>
+<ul>
+<li>username(str):　string类型, 账户名</li>
+<li>password(str):　string类型, 账户密码</li>
+<li>authlevel(int):　int类型, 账户权限等级(0-10), 具体信息可以看<a href="http://dev.deluge-torrent.org/wiki/UserGuide/Authentication" target="_blank" rel="external">这里</a></li>
+</ul>
+<p>7.创建种子文件</p>
+<blockquote>
+<p>create_torrent(<em>path, tracker, piece_length, comment, target, webseeds, private, created_by, trackers, add_to_session</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>8.禁用插件</p>
+<blockquote>
+<p>disable_plugin(<em>plugin</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>plugin(str): string类型, 插件名</li>
+</ul>
+<p>9.启用插件</p>
+<blockquote>
+<p>enable_plugin(<em>plugin</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>plugin(str): string类型, 插件名</li>
+</ul>
+<p>10.reannouncment</p>
+<blockquote>
+<p>force_reannounce(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list):　list类型, 种子id</li>
+</ul>
+<p>11.强制数据校验</p>
+<blockquote>
+<p>force_recheck<em>(torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list):　list类型, 种子id</li>
+</ul>
+<p>12.</p>
+<blockquote>
+<p>get_auth_levels_mappings()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 0)</p>
+<p>Returns:</p>
+<p>13.获取可用的插件列表</p>
+<blockquote>
+<p>get_available_plugins()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>tuple类型, 插件名列表</li>
+</ul>
+<p>14.获取完整路径</p>
+<blockquote>
+<p>get_completion_paths(<em>args</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>args: </li>
+</ul>
+<p>15.获取配置</p>
+<blockquote>
+<p>get_config()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>dict类型, 完整的配置信息</li>
+</ul>
+<p>16.获取指定的配置信息</p>
+<blockquote>
+<p>get_config_value(<em>key</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>key(str): string类型, 指定的配置项(具体可在get_config中看到)</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>string类型, 指定的配置信息</li>
+</ul>
+<p>17.或者多个指定的配置信息</p>
+<blockquote>
+<p>get_config_values(<em>keys</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>keys(list): list类型, 指定的配置项</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>dict类型, 返回的配置信息</li>
+</ul>
+<p>18.获取启用的插件列表</p>
+<blockquote>
+<p>get_enabled_plugins()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>tuple类型, 启用的插件列表</li>
+</ul>
+<p>19.</p>
+<blockquote>
+<p>get_external_ip()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns the external ip address recieved from libtorrent.</p>
+<p>20.获取过滤项</p>
+<blockquote>
+<p>get_filter_tree(show_zero_hits=True, hide_cat=None)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<p>Returns:</p>
+<ul>
+<li>dict类型, {field: [(value,count)] } for use in sidebar(s)</li>
+</ul>
+<p>21.获取可用空间</p>
+<blockquote>
+<p>get_free_space(<em>path=None</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>path(str): string类型, 获取该路径下的可用空间, 若为None, 则使用默认的下载目录路径</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>int类型, 单位为byte</li>
+</ul>
+<p>Raises:</p>
+<ul>
+<li>InvalidPathError: 路径不存在时触发</li>
+</ul>
+<p>22.获取已知账户</p>
+<blockquote>
+<p>get_known_accounts()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 10)</p>
+<p>Returns:</p>
+<p>23.获取libtorrent版本</p>
+<blockquote>
+<p>get_libtorrent_version()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>string类型, libtorrent版本号</li>
+</ul>
+<p>24.获取监听的端口号</p>
+<blockquote>
+<p>get_listen_port()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>int类型, deluge daemon监听的端口号</li>
+</ul>
+<p>25.获取目录大小</p>
+<blockquote>
+<p>get_poth_size(path)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>path(str): string类型, 获取该目录的大小</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>int类型, 单位为byte<br>-若路径不存在或者访问权限不足等, 返回-1</li>
+</ul>
+<p>26.获取代理设置</p>
+<blockquote>
+<p>get_proxy()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>dict类型, 代理设置(0:None, 1:Socks4, 2:Socks5, 3: Socks5 w Auth, 4: HTTP, 5: HTTP w Auth, 6: I2P)</li>
+</ul>
+<p>27.获取会话状态</p>
+<blockquote>
+<p>get_session_state()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>list类型, 所有种子id</li>
+</ul>
+<p>28.获取会话状态(详细)</p>
+<blockquote>
+<p>get_session_status(keys)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args: </p>
+<ul>
+<li>keys(list): list类型, 具体参数请参见<a href="http://www.rasterbar.com/products/libtorrent/manual.html#status" target="_blank" rel="external">这里</a>的session_status结构体</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>dict类型</li>
+</ul>
+<p>29.获取单个种子状态</p>
+<blockquote>
+<p>get_torrent_status(<em>torrent_id, keys, diff=False</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id, 可通过get_session_status获取</li>
+<li>keys(list): list类型, 具体参数请参见<a href="http://www.rasterbar.com/products/libtorrent/manual.html#status" target="_blank" rel="external">这里</a>的session_status结构体</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>dict类型</li>
+</ul>
+<p>30.获取所有种子状态</p>
+<blockquote>
+<p>get_torrents_status(<em>filter_dict, keys, diff=False</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>filter_dict(dict): dict类型, 过滤用, 不需过滤可设置为[]</li>
+<li>keys(list): list类型, 具体参数请参见<a href="http://www.rasterbar.com/products/libtorrent/manual.html#status" target="_blank" rel="external">这里</a>的session_status结构体</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>dict类型</li>
+</ul>
+<p>31.查找文件</p>
+<blockquote>
+<p>glob(path)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>path(str): string类型, 具体使用参考python glbo库使用</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>tuple类型, 匹配到的文件或目录</li>
+</ul>
+<p>32.移动种子至其他目录</p>
+<blockquote>
+<p>move_storage(<em>torrent_ids, dest</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+<li>dest(str): string类型, 目标目录</li>
+</ul>
+<p>33.暂停会话(暂停所有种子)</p>
+<blockquote>
+<p>pause_session()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>34.暂停种子</p>
+<blockquote>
+<p>pause_torrent(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+</ul>
+<p>35.</p>
+<blockquote>
+<p>queue_bottom(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>36.</p>
+<blockquote>
+<p>queue_down(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+</ul>
+<p>37.</p>
+<blockquote>
+<p>queue_top(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+</ul>
+<p>38.</p>
+<blockquote>
+<p>queue_up(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+</ul>
+<p>39.删除账户</p>
+<blockquote>
+<p>remove_account(username)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 10)</p>
+<p>Args:</p>
+<ul>
+<li>username(str):　string类型, 要删除的账户名</li>
+</ul>
+<p>40.移除种子</p>
+<blockquote>
+<p>remove_torrent(<em>torrent_id, remove_data</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+<li>remove_data(bool): bool类型, True删除数据, False仅移除种子</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>bool类型, 移除成功则返回True</li>
+</ul>
+<p>Raises:</p>
+<ul>
+<li>InvalidTorrentError: 种子id不存在时触发</li>
+</ul>
+<p>41.移除种子(批量)</p>
+<blockquote>
+<p>remove_torrents(torrent_ids, remove_data)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+<li>remove_data(bool): bool类型, True删除数据, False仅移除种子</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>list类型, 若移除成功, 则返回空list, 否则返回一个包含tuple的list, 包括种子id和错误信息, 例如[(‘<torrent_id>’, ‘Error removing torrent’)]</torrent_id></li>
+</ul>
+<p>42.重命名文件</p>
+<blockquote>
+<p>rename_files(<em>torrent_id, filenames</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+<li>filenames (((index, filename), ..)) – a list of index, filename pairs</li>
+</ul>
+<p>Raises:</p>
+<ul>
+<li>InvalidTorrentError: 种子id不存在时触发</li>
+</ul>
+<p>43.重命名目录</p>
+<blockquote>
+<p>rename_folder(<em>torrent_id, folder, new_folder</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args: </p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+<li>folder(str): string类型, 需要重命名的目录</li>
+<li>new_folder(str): string类型, 新目录名</li>
+</ul>
+<p>Raises:</p>
+<ul>
+<li>InvalidTorrentError: 种子id不存在时触发</li>
+</ul>
+<p>44.重新扫描插件</p>
+<blockquote>
+<p>rescan_plugins()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>45.恢复会话(所有种子开始下载)</p>
+<blockquote>
+<p>resume_session()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>46.恢复种子(开始下载)</p>
+<blockquote>
+<p>resume_torrent(<em>torrent_ids</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+</ul>
+<p>47.设置全局配置项</p>
+<blockquote>
+<p>set_config(<em>config</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>config(dict): dict类型, 配置项可通过get_config()查看</li>
+</ul>
+<p>48.设置种子配置项</p>
+<blockquote>
+<p>set_torrent_options(<em>torrent_ids, options</em>)</p>
+</blockquote>
+<p>PC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_ids(list): list类型, 种子id</li>
+<li>options(dict): dict类型, 种子配置项目, 可在<a href="https://github.com/deluge-torrent/deluge/blob/develop/deluge/core/torrent.py" target="_blank" rel="external">这里</a>的TorrentOptions类中查看</li>
+</ul>
+<p>49.为种子设置tracker服务器</p>
+<blockquote>
+<p>set_torrent_trackers(<em>torrent_id, trackers</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>torrent_id(str): string类型, 种子id</li>
+<li>trackers(list): list类型, 例如[{“url”, “tier”}], url为tracker地址, tier为编号</li>
+</ul>
+<p>50.更新账户信息</p>
+<blockquote>
+<p>update_account(<em>username, password, authlevel</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 10)</p>
+<p>Args:</p>
+<ul>
+<li>username(str): string类型, 账户名称</li>
+<li>password(str): string类型, 账户密码</li>
+<li>authlevel(str): string类型, 账户权限等级</li>
+</ul>
+<ol>
+<li>上传插件<blockquote>
+<p>upload_plugin(<em>filename, filedump</em>)</p>
+</blockquote>
+</li>
+</ol>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Args:</p>
+<ul>
+<li>filename(str): string类型, 文件名称</li>
+<li>filedump(str): string类型, base64编码</li>
+</ul>
+<h3 id="daemon类"><a href="#daemon类" class="headerlink" title="daemon类"></a>daemon类</h3><blockquote>
+<p>class daemon #deluge.core.daemon.Daemon</p>
+</blockquote>
+<p>1.确认是否有权限调用RPC</p>
+<blockquote>
+<p>authorized_call(<em>rpc</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 1)</p>
+<p>Args:</p>
+<ul>
+<li>rpc(str): string类, A RPC, e.g. core.get_torrents_status</li>
+</ul>
+<p>Returns:</p>
+<ul>
+<li>bool类型, 若有权限则为True</li>
+</ul>
+<p>2.获取可使用的方法</p>
+<blockquote>
+<p>get_method_list()</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+<p>Returns:</p>
+<ul>
+<li>tuple类型, 可使用的方法</li>
+</ul>
+<p>3.关闭daemon</p>
+<blockquote>
+<p>shutdown(<em><em>args, *</em>kwargs</em>)</p>
+</blockquote>
+<p>RPC Exported Function (Auth Level: 5)</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2017" class="archive-year">2017</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/10/09/201710091704/" class="archive-article-date">
-  	<time datetime="2017-10-09T09:04:19.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/09/201710091704/">Linux 搭建L4D2服务器</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -179,196 +771,60 @@
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">other</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">deluge</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/10/09/201710091703/" class="archive-article-date">
-  	<time datetime="2017-10-09T09:03:22.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2017/10/09/201710091723/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">arch linux安装使用hexo</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
+        
+        
+    </div>
+</aside>
+
+
+
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/09/201710091703/">Linux搭建leanote服务器并配置SSL</a>
-    </h1>
+  
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">other</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/10/09/201710091701/" class="archive-article-date">
-  	<time datetime="2017-10-09T09:01:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/09/201710091701/">Archlinux thunar 无权限挂载本地磁盘</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">other</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/10/09/201710091643/" class="archive-article-date">
-  	<time datetime="2017-10-09T08:43:21.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/09/201710091643/">ESXi使用NAT网络</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">virtualization</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">ESXi</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2017/10/09/201710091601/" class="archive-article-date">
-  	<time datetime="2017-10-09T08:01:14.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-10-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/09/201710091601/">ESXi及Vcenter安装</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">virtualization</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">ESXi</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/archives/">&laquo; Prev</a><a class="page-number" href="/archives/">1</a><span class="page-number current">2</span>
-    </nav>
   
 
 
@@ -392,8 +848,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
